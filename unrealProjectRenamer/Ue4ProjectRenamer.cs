@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace unrealProjectRenamer
 {
@@ -11,6 +12,7 @@ namespace unrealProjectRenamer
     {
         private readonly Ue4ProjectController projectController;
         private readonly string newName;
+        private string newProjectPath;
 
         public Ue4ProjectRenamer(Ue4ProjectController projectController, string newName)
         {
@@ -19,9 +21,6 @@ namespace unrealProjectRenamer
         }
 
         //ToDo:
-        //    Duplicate the OldName project folder.Rename the duplicate folder to NewName.
-        //    Open the NewName folder.
-        //    Rename OldName.uproject to NewName.uproject.
         //    Open NewName.uproject in a text editor, and replace all instances of OldName with NewName. Save and close the file.
         //    If you have an OldName.png thumbnail, rename it to NewName.png.
         //    Open the Source folder.
@@ -45,7 +44,7 @@ namespace unrealProjectRenamer
         public void Rename()
         {
             DuplicateProject();
-            //RenameUprojectFile();
+            RenameUprojectFile();
             //UpdateNewUprojectFile();
             //RenameThumbnail();
             //RenameTargetCs();
@@ -60,26 +59,34 @@ namespace unrealProjectRenamer
             //UpdateConfigFiles();
             //AddGameRedirectsToEngineIni();
             //UpdateApiInSource();
+            Application.Exit();
         }
 
         private void DuplicateProject()
         {
             string sourcePath = projectController.GetProjectPath();
-            string destinationPath = projectController.GetProjectPath();
+            newProjectPath = projectController.GetProjectPath();
             //Todo: Can this be safer?
-            destinationPath = destinationPath.Replace(projectController.GetProjectName(), newName);
+            newProjectPath = newProjectPath.Replace(projectController.GetProjectName(), newName);
 
             //Now Create all of the directories
             foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
             {
-                Directory.CreateDirectory(dirPath.Replace(sourcePath, destinationPath));
+                Directory.CreateDirectory(dirPath.Replace(sourcePath, newProjectPath));
             }
 
             //Copy all the files & Replaces any files with the same name
             foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             {
-                File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
+                File.Copy(newPath, newPath.Replace(sourcePath, newProjectPath), true);
             }
+        }
+
+        private void RenameUprojectFile()
+        {
+            string oldUproject = Path.Combine(newProjectPath, projectController.GetProjectName() + ".uproject");
+            string newUproject = Path.Combine(newProjectPath, newName + ".uproject");
+            File.Move(oldUproject, newUproject);
         }
     }
 }
