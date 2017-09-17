@@ -21,12 +21,7 @@ namespace unrealProjectRenamer
         }
 
         //ToDo:
-        //    Open NewName.uproject in a text editor, and replace all instances of OldName with NewName. Save and close the file.
-        //    If you have an OldName.png thumbnail, rename it to NewName.png.
         //    Open the Source folder.
-        //    Rename OldName.Target.cs to NewName.Target.cs.
-        //    Open NewName.Target.cs.Find all instances of OldName in this file with NewName.There may be some partial word matches.Save and close the file.
-        //    Repeat step 7 and 8 for OldNameEditor.Target.cs (renaming it to NewNameEditor.Target.cs.
         //    Rename this OldName folder to NewName as well.
         //    Open the NewName folder.
         //    Rename OldName.Build.cs to NewName.Build.cs.
@@ -39,18 +34,17 @@ namespace unrealProjectRenamer
         //    Add the following to DefaultEngine.ini (under an existing or new [/ Script / Engine.Engine] header):
         //    +ActiveGameNameRedirects=(OldGameName="/Script/OldName", NewGameName="/Script/NewName")
         //    If you have any OLDNAME_API in your project's header files, change those instances to NEWNAME_API.
-        //    Delete Saved and Intermediate folders in your project directory.
         //    Compile, and your project should now open without errors.
         public void Rename()
         {
             DuplicateProject();
             RenameUprojectFile();
-            //UpdateNewUprojectFile();
-            //RenameThumbnail();
-            //RenameTargetCs();
-            //UpdateNewTargetCsFile();
-            //RenameEditorTargetCs();
-            //UpdateNewEditorTargetCsFile();
+            UpdateNewUprojectFile();
+            RenameThumbnail();
+            RenameTargetCs();
+            UpdateNewTargetCsFile();
+            RenameEditorTargetCs();
+            UpdateNewEditorTargetCsFile();
             //RenameMainModuleFolder();
             //RenameBuildCs():
             //UpdateNewBuildCsFile();
@@ -72,21 +66,74 @@ namespace unrealProjectRenamer
             //Now Create all of the directories
             foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
             {
-                Directory.CreateDirectory(dirPath.Replace(sourcePath, newProjectPath));
+                if (!dirPath.Contains("\\Intermediate") && !dirPath.Contains("\\Saved"))
+                {
+                    Directory.CreateDirectory(dirPath.Replace(sourcePath, newProjectPath));
+                }
             }
 
             //Copy all the files & Replaces any files with the same name
             foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             {
-                File.Copy(newPath, newPath.Replace(sourcePath, newProjectPath), true);
+                if (!newPath.Contains("\\Intermediate\\") && !newPath.Contains("\\Saved\\"))
+                {
+                    File.Copy(newPath, newPath.Replace(sourcePath, newProjectPath), true);
+                }
             }
         }
 
         private void RenameUprojectFile()
         {
-            string oldUproject = Path.Combine(newProjectPath, projectController.GetProjectName() + ".uproject");
-            string newUproject = Path.Combine(newProjectPath, newName + ".uproject");
-            File.Move(oldUproject, newUproject);
+            RenameProjectFile("", ".uproject");
+        }
+
+        private void UpdateNewUprojectFile()
+        {
+            UpdateProjectFile("", ".uproject");
+        }
+
+        private void RenameThumbnail()
+        {
+            RenameProjectFile("", ".png");
+        }
+
+        private void RenameTargetCs()
+        {
+            RenameProjectFile("Source", ".Target.cs");
+        }
+
+        private void UpdateNewTargetCsFile()
+        {
+            UpdateProjectFile("Source", ".Target.cs");
+        }
+
+        private void RenameEditorTargetCs()
+        {
+            RenameProjectFile("Source", "Editor.Target.cs");
+        }
+
+        private void UpdateNewEditorTargetCsFile()
+        {
+            UpdateProjectFile("Source", "Editor.Target.cs");
+        }
+
+        private void UpdateProjectFile(string path, string extention)
+        {
+            string filePath = Path.Combine(newProjectPath, path, newName + extention);
+            string fileContent = File.ReadAllText(filePath);
+
+            fileContent = fileContent.Replace(projectController.GetProjectName(), newName);
+            File.WriteAllText(filePath, fileContent);
+        }
+
+        private void RenameProjectFile(string path, string extention)
+        {
+            string oldFile = Path.Combine(newProjectPath, path, projectController.GetProjectName() + extention);
+            if (File.Exists(oldFile))
+            {
+                string newFile = Path.Combine(newProjectPath, path, newName + extention);
+                File.Move(oldFile, newFile);
+            }
         }
     }
 }
