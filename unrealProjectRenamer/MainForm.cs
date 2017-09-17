@@ -58,6 +58,8 @@ namespace unrealProjectRenamer
             {
                 projectPathErrorProvider.SetError(newProjectNameBox, "");
             }
+            Ue4ProjectRenamer Renamer = new Ue4ProjectRenamer(projectController, newProjectNameBox.Text);
+            Renamer.Rename();
             //ToDo: Rename
         }
     }

@@ -95,5 +95,10 @@ namespace unrealProjectRenamer
         {
             return ue4ProjectName;
         }
+
+        public string GetProjectPath()
+        {
+            return ue4ProjectPath;
+        }
     }
 }
