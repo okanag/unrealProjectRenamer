@@ -61,6 +61,15 @@ namespace unrealProjectRenamer.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select the project folder of your Unreal Engine 4 engine that is associated with the project..
+        /// </summary>
+        internal static string MainForm_enginePathFolderBrowserDescription {
+            get {
+                return ResourceManager.GetString("MainForm_enginePathFolderBrowserDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select the project folder of your Unreal Engine 4 project..
         /// </summary>
         internal static string MainForm_projectPathFolderBrowserDescription {

@@ -5,20 +5,20 @@ namespace unrealProjectRenamer
 {
     class Ue4ProjectRenamer
     {
+        private readonly Ue4EngineUtilities engineUtilities;
         private readonly Ue4ProjectController projectController;
         private readonly string newName;
         private string newProjectPath;
 
-        public Ue4ProjectRenamer(Ue4ProjectController projectController, string newName)
+        public Ue4ProjectRenamer(Ue4EngineUtilities engineUtilities, Ue4ProjectController projectController, string newName)
         {
+            this.engineUtilities = engineUtilities;
             this.projectController = projectController;
             this.newName = newName;
         }
 
         //ToDo:
         //    Open the Source folder.
-        //    Go back to the main project folder, and right-click on the NewName.uproject file. Select Generate Visual Studio Project files. (If you don't have this option, run Engine/Binaries/Win64/UnrealVersionSelector-Win64-Shipping.exe once).
-        //    Open NewName.sln.
         //    Open OldName.cpp
         //    Change IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, OldName, "OldName" ); to IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, NewName, "NewName" );
         //    Open the Config folder, and check all the configuration files for OldName references to change to NewName.For example, change GlobalDefaultGameMode =/ Script / OldName.OldNameGameMode to GlobalDefaultGameMode =/ Script / NewName.OldNameGameMode.
@@ -39,7 +39,7 @@ namespace unrealProjectRenamer
             RenameMainModuleFolder();
             RenameBuildCs();
             UpdateNewBuildCsFile();
-            //GenerateProjectFiles();
+            GenerateProjectFiles();
             //UpdateMainModuleCpp();
             //UpdateConfigFiles();
             //AddGameRedirectsToEngineIni();
@@ -57,7 +57,9 @@ namespace unrealProjectRenamer
             //Now Create all of the directories
             foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
             {
-                if (!dirPath.Contains("\\Intermediate") && !dirPath.Contains("\\Saved"))
+                if (!dirPath.Contains("\\Intermediate") && 
+                    !dirPath.Contains("\\Saved") && 
+                    !dirPath.Contains("\\.vs"))
                 {
                     Directory.CreateDirectory(dirPath.Replace(sourcePath, newProjectPath));
                 }
@@ -66,7 +68,10 @@ namespace unrealProjectRenamer
             //Copy all the files & Replaces any files with the same name
             foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             {
-                if (!newPath.Contains("\\Intermediate\\") && !newPath.Contains("\\Saved\\"))
+                if (!newPath.Contains("\\Intermediate\\") && 
+                    !newPath.Contains("\\Saved\\") && 
+                    !newPath.Contains("\\.vs\\") && 
+                    !newPath.Contains(projectController.GetProjectName() + ".sln"))
                 {
                     File.Copy(newPath, newPath.Replace(sourcePath, newProjectPath), true);
                 }
@@ -137,6 +142,11 @@ namespace unrealProjectRenamer
         private void UpdateNewBuildCsFile()
         {
             UpdateProjectFile(Path.Combine("Source", newName), ".Build.cs");
+        }
+
+        private void GenerateProjectFiles()
+        {
+            engineUtilities.GenerateProjectFiles(Path.Combine(newProjectPath, newName + ".uproject"));
         }
 
         private void UpdateProjectFile(string path, string extention)
