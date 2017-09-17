@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 using System.Windows.Forms;
 
 namespace unrealProjectRenamer
@@ -22,10 +17,6 @@ namespace unrealProjectRenamer
 
         //ToDo:
         //    Open the Source folder.
-        //    Rename this OldName folder to NewName as well.
-        //    Open the NewName folder.
-        //    Rename OldName.Build.cs to NewName.Build.cs.
-        //    Open NewName.Build.cs.Find all instances of OldName in this file with NewName.Save and close the file.
         //    Go back to the main project folder, and right-click on the NewName.uproject file. Select Generate Visual Studio Project files. (If you don't have this option, run Engine/Binaries/Win64/UnrealVersionSelector-Win64-Shipping.exe once).
         //    Open NewName.sln.
         //    Open OldName.cpp
@@ -45,9 +36,9 @@ namespace unrealProjectRenamer
             UpdateNewTargetCsFile();
             RenameEditorTargetCs();
             UpdateNewEditorTargetCsFile();
-            //RenameMainModuleFolder();
-            //RenameBuildCs():
-            //UpdateNewBuildCsFile();
+            RenameMainModuleFolder();
+            RenameBuildCs();
+            UpdateNewBuildCsFile();
             //GenerateProjectFiles();
             //UpdateMainModuleCpp();
             //UpdateConfigFiles();
@@ -115,6 +106,37 @@ namespace unrealProjectRenamer
         private void UpdateNewEditorTargetCsFile()
         {
             UpdateProjectFile("Source", "Editor.Target.cs");
+        }
+
+        private void RenameMainModuleFolder()
+        {
+            string sourcePath = Path.Combine(newProjectPath, "Source");
+            string sourceModulePath = Path.Combine(sourcePath, projectController.GetProjectName());
+            string destinationModulePath = Path.Combine(sourcePath, newName);
+
+            if (Directory.Exists(destinationModulePath))
+            {
+                //ToDo: Error there is already a game module with the new name
+            }
+
+            Directory.CreateDirectory(destinationModulePath);
+            //Copy all the files & Replaces any files with the same name
+            foreach (string file in Directory.GetFiles(sourceModulePath, "*.*", SearchOption.AllDirectories))
+            {
+                File.Copy(file, file.Replace(sourceModulePath, destinationModulePath), true);
+            }
+
+            Directory.Delete(sourceModulePath, true);
+        }
+
+        private void RenameBuildCs()
+        {
+            RenameProjectFile(Path.Combine("Source", newName), ".Build.cs");
+        }
+
+        private void UpdateNewBuildCsFile()
+        {
+            UpdateProjectFile(Path.Combine("Source", newName), ".Build.cs");
         }
 
         private void UpdateProjectFile(string path, string extention)
