@@ -71,7 +71,7 @@ namespace unrealProjectRenamer
             engineUtilities.InitializeWithEnginePath(EnginePathTextBox.Text);
             if (engineUtilities.IsEnginePathValid())
             {
-                projectPathErrorProvider.SetError(projectPathTextBox, "");
+                projectPathErrorProvider.SetError(EnginePathTextBox, "");
             }
             else
             {

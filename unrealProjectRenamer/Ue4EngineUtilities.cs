@@ -29,7 +29,7 @@ namespace unrealProjectRenamer
             string buildBatPath = Path.Combine(enginePath, "Engine/Binaries/DotNET/UnrealBuildTool.exe");
             
             ProcessStartInfo processStartInfo = new ProcessStartInfo();
-            //processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             processStartInfo.FileName = buildBatPath;
             processStartInfo.Arguments = "-projectfiles -project=\"" + uprojectFilePath + "\" -game -rocket -progress";
             Process process = Process.Start(processStartInfo);

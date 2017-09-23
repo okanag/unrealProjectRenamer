@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Windows.Forms;
 
 namespace unrealProjectRenamer
@@ -18,14 +20,7 @@ namespace unrealProjectRenamer
         }
 
         //ToDo:
-        //    Open the Source folder.
-        //    Open OldName.cpp
-        //    Change IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, OldName, "OldName" ); to IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, NewName, "NewName" );
-        //    Open the Config folder, and check all the configuration files for OldName references to change to NewName.For example, change GlobalDefaultGameMode =/ Script / OldName.OldNameGameMode to GlobalDefaultGameMode =/ Script / NewName.OldNameGameMode.
-        //    Add the following to DefaultEngine.ini (under an existing or new [/ Script / Engine.Engine] header):
-        //    +ActiveGameNameRedirects=(OldGameName="/Script/OldName", NewGameName="/Script/NewName")
-        //    If you have any OLDNAME_API in your project's header files, change those instances to NEWNAME_API.
-        //    Compile, and your project should now open without errors.
+        // Add redirectors for classes in main game module
         public void Rename()
         {
             DuplicateProject();
@@ -40,10 +35,9 @@ namespace unrealProjectRenamer
             RenameBuildCs();
             UpdateNewBuildCsFile();
             GenerateProjectFiles();
-            //UpdateMainModuleCpp();
-            //UpdateConfigFiles();
-            //AddGameRedirectsToEngineIni();
-            //UpdateApiInSource();
+            UpdateMainModuleCpp();
+            UpdateEngineConfigIni();
+            UpdateApiInSource();
             Application.Exit();
         }
 
@@ -166,6 +160,98 @@ namespace unrealProjectRenamer
                 string newFile = Path.Combine(newProjectPath, path, newName + extention);
                 File.Move(oldFile, newFile);
             }
+        }
+
+        private void UpdateMainModuleCpp()
+        {
+            string projectName = projectController.GetProjectName();
+            string filePath = Path.Combine(newProjectPath, "Source", newName, projectName + ".cpp");
+            string fileContent = File.ReadAllText(filePath);
+
+            string implementModuleString = "IMPLEMENT_PRIMARY_GAME_MODULE";
+
+            int implementModuleIndex = fileContent.IndexOf(implementModuleString, StringComparison.Ordinal);
+
+            int firstProjectNameIndex = fileContent.IndexOf(projectName, implementModuleIndex, StringComparison.Ordinal);
+            fileContent = fileContent.Remove(firstProjectNameIndex, projectName.Length);
+            fileContent = fileContent.Insert(firstProjectNameIndex, newName);
+
+            int secondProjectNameIndex =
+                fileContent.IndexOf(projectName, implementModuleIndex, StringComparison.Ordinal);
+            fileContent = fileContent.Remove(secondProjectNameIndex, projectName.Length);
+            fileContent = fileContent.Insert(secondProjectNameIndex, newName);
+
+            File.WriteAllText(filePath, fileContent);
+        }
+
+        private void UpdateEngineConfigIni()
+        {
+            string projectName = projectController.GetProjectName();
+            string filePath = Path.Combine(newProjectPath, "Config", "DefaultEngine.ini");
+            string fileContent = File.ReadAllText(filePath);
+
+            fileContent = ReplaceDefaultGameMode(fileContent);
+            fileContent = AddGameNameRedirector(fileContent);
+            fileContent = AddClassRedirectors(fileContent);
+
+            File.WriteAllText(filePath, fileContent);
+        }
+
+        private string ReplaceDefaultGameMode(string fileContent)
+        {
+            string defaultGameModeString = "GlobalDefaultGameMode=/Script/" + projectController.GetProjectName() + ".";
+            string newDefaultGameModeString = "GlobalDefaultGameMode=/Script/" + newName + ".";
+
+            fileContent = fileContent.Replace(defaultGameModeString, newDefaultGameModeString);
+            return fileContent;
+        }
+
+        private string AddGameNameRedirector(string fileContent)
+        {
+            string engineIniCategory = "[/Script/Engine.Engine]";
+
+            int categoryIndex = fileContent.IndexOf(engineIniCategory, StringComparison.Ordinal);
+
+            int firstElementIndex = fileContent.IndexOf("+", categoryIndex, StringComparison.Ordinal);
+
+            string gameNameRedirector = "+ActiveGameNameRedirects=(OldGameName=\"/Script/" + projectController.GetProjectName() +
+                                        "\",NewGameName=\"/Script/" + newName + "\")\r\n";
+
+            fileContent = fileContent.Insert(firstElementIndex, gameNameRedirector);
+            return fileContent;
+        }
+
+        private string AddClassRedirectors(string fileContent)
+        {
+            string sourceFolderPath = Path.Combine(newProjectPath, "Source");
+
+            foreach (string headerPath in Directory.GetFiles(sourceFolderPath, "*.h", SearchOption.AllDirectories))
+            {
+                //ToDo: create redirector for every class!
+            }
+
+            return fileContent;
+        }
+
+        private void UpdateApiInSource()
+        {
+            string oldApiString = projectController.GetProjectName().ToUpper() + "_API";
+            string newApiString = newName.ToUpper() + "_API";
+
+            string sourceFolderPath = Path.Combine(newProjectPath, "Source");
+
+            foreach (string headerPath in Directory.GetFiles(sourceFolderPath, "*.h", SearchOption.AllDirectories))
+            {
+                string headerContent = File.ReadAllText(headerPath);
+                int apiStringIndex = headerContent.IndexOf(oldApiString, StringComparison.Ordinal);
+                if (apiStringIndex < -1)
+                {
+                    continue;
+                }
+
+                headerContent = headerContent.Replace(oldApiString, newApiString);
+                File.WriteAllText(headerPath, headerContent);
+            }       
         }
     }
 }
