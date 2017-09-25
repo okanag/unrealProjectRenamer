@@ -14,8 +14,8 @@ namespace unrealProjectRenamer
         {
             InitializeComponent();
 
-            projectPathTextBox.Validating += new CancelEventHandler(ProjectPathTextBox_Validating);
-            EnginePathTextBox.Validating += new CancelEventHandler(EnginePathTextBox_Validating);
+            projectPathTextBox.Validating += ProjectPathTextBox_Validating;
+            EnginePathTextBox.Validating += EnginePathTextBox_Validating;
 
             projectController = new Ue4ProjectController();
             engineUtilities = new Ue4EngineUtilities();
@@ -69,14 +69,8 @@ namespace unrealProjectRenamer
         protected void EnginePathTextBox_Validating(object sender, CancelEventArgs e)
         {
             engineUtilities.InitializeWithEnginePath(EnginePathTextBox.Text);
-            if (engineUtilities.IsEnginePathValid())
-            {
-                projectPathErrorProvider.SetError(EnginePathTextBox, "");
-            }
-            else
-            {
-                projectPathErrorProvider.SetError(EnginePathTextBox, "Can't find engine files in given path!");
-            }
+            projectPathErrorProvider.SetError(EnginePathTextBox,
+                engineUtilities.IsEnginePathValid() ? "" : "Can't find engine files in given path!");
         }
 
         private void RenameButton_Click(object sender, EventArgs e)
@@ -89,8 +83,8 @@ namespace unrealProjectRenamer
             {
                 projectPathErrorProvider.SetError(newProjectNameBox, "");
 
-                Ue4ProjectRenamer Renamer = new Ue4ProjectRenamer(engineUtilities, projectController, newProjectNameBox.Text);
-                Renamer.Rename();
+                Ue4ProjectRenamer renamer = new Ue4ProjectRenamer(engineUtilities, projectController, newProjectNameBox.Text);
+                renamer.Rename();
             }
         }
     }

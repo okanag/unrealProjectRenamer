@@ -186,7 +186,6 @@ namespace unrealProjectRenamer
 
         private void UpdateEngineConfigIni()
         {
-            string projectName = projectController.GetProjectName();
             string filePath = Path.Combine(newProjectPath, "Config", "DefaultEngine.ini");
             string fileContent = File.ReadAllText(filePath);
 

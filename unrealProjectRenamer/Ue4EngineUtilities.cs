@@ -9,14 +9,7 @@ namespace unrealProjectRenamer
 
         public void InitializeWithEnginePath(string enginePath)
         {
-            if (File.Exists(Path.Combine(enginePath, "Engine/Binaries/DotNET/UnrealBuildTool.exe")))
-            {
-                this.enginePath = enginePath;
-            }
-            else
-            {
-                this.enginePath = "";
-            }
+            this.enginePath = File.Exists(Path.Combine(enginePath, "Engine/Binaries/DotNET/UnrealBuildTool.exe")) ? enginePath : "";
         }
 
         public bool IsEnginePathValid()
@@ -33,7 +26,7 @@ namespace unrealProjectRenamer
             processStartInfo.FileName = buildBatPath;
             processStartInfo.Arguments = "-projectfiles -project=\"" + uprojectFilePath + "\" -game -rocket -progress";
             Process process = Process.Start(processStartInfo);
-            process.WaitForExit();
+            process?.WaitForExit();
         }
     }
 }
