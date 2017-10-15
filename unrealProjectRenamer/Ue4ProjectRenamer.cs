@@ -20,9 +20,11 @@ namespace unrealProjectRenamer
         }
 
         //ToDo:
-        // Add redirectors for classes in main game module
+        // Update all module build cs files, as some may depend on main module
+        // Change GameInstanceClass in DefaultEngine.ini
         public void Rename()
         {
+            SetNewProjectPath();
             DuplicateProject();
             RenameUprojectFile();
             UpdateNewUprojectFile();
@@ -38,36 +40,47 @@ namespace unrealProjectRenamer
             UpdateMainModuleCpp();
             UpdateEngineConfigIni();
             UpdateApiInSource();
+            FixupRedirects();
+            ResavePackages();
             Application.Exit();
+        }
+
+        private void SetNewProjectPath()
+        {
+            newProjectPath = projectController.GetProjectPath();
+            //Todo: Can this be safer?
+            newProjectPath = newProjectPath.Replace(projectController.GetProjectName(), newName);
         }
 
         private void DuplicateProject()
         {
             string sourcePath = projectController.GetProjectPath();
-            newProjectPath = projectController.GetProjectPath();
-            //Todo: Can this be safer?
-            newProjectPath = newProjectPath.Replace(projectController.GetProjectName(), newName);
-
             //Now Create all of the directories
             foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
             {
                 if (!dirPath.Contains("\\Intermediate") && 
                     !dirPath.Contains("\\Saved") && 
-                    !dirPath.Contains("\\.vs"))
+                    !dirPath.Contains("\\.vs") &&
+                    !dirPath.Contains("\\Binaries") &&
+                    !dirPath.Contains("\\Releases"))
                 {
                     Directory.CreateDirectory(dirPath.Replace(sourcePath, newProjectPath));
                 }
             }
 
             //Copy all the files & Replaces any files with the same name
-            foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+            foreach (string sourceFilePath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             {
-                if (!newPath.Contains("\\Intermediate\\") && 
-                    !newPath.Contains("\\Saved\\") && 
-                    !newPath.Contains("\\.vs\\") && 
-                    !newPath.Contains(projectController.GetProjectName() + ".sln"))
+                if (!sourceFilePath.Contains("\\Intermediate\\") && 
+                    !sourceFilePath.Contains("\\Saved\\") && 
+                    !sourceFilePath.Contains("\\.vs\\") &&
+                    !sourceFilePath.Contains("\\Binaries\\") &&
+                    !sourceFilePath.Contains("\\Releases\\") &&
+                    !sourceFilePath.Contains(projectController.GetProjectName() + ".sln"))
                 {
-                    File.Copy(newPath, newPath.Replace(sourcePath, newProjectPath), true);
+                    string destinationFilePath = sourceFilePath.Replace(sourcePath, newProjectPath);
+                    File.Copy(sourceFilePath, sourceFilePath.Replace(sourcePath, newProjectPath), true);
+                    File.SetAttributes(destinationFilePath, File.GetAttributes(destinationFilePath) & ~FileAttributes.ReadOnly);
                 }
             }
         }
@@ -119,6 +132,13 @@ namespace unrealProjectRenamer
             }
 
             Directory.CreateDirectory(destinationModulePath);
+
+            //Now Create all of the directories
+            foreach (string dirPath in Directory.GetDirectories(sourceModulePath, "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(dirPath.Replace(sourceModulePath, destinationModulePath));
+            }
+
             //Copy all the files & Replaces any files with the same name
             foreach (string file in Directory.GetFiles(sourceModulePath, "*.*", SearchOption.AllDirectories))
             {
@@ -149,6 +169,7 @@ namespace unrealProjectRenamer
             string fileContent = File.ReadAllText(filePath);
 
             fileContent = fileContent.Replace(projectController.GetProjectName(), newName);
+
             File.WriteAllText(filePath, fileContent);
         }
 
@@ -249,8 +270,19 @@ namespace unrealProjectRenamer
                 }
 
                 headerContent = headerContent.Replace(oldApiString, newApiString);
+
                 File.WriteAllText(headerPath, headerContent);
             }       
+        }
+
+        private void FixupRedirects()
+        {
+            engineUtilities.FixupRedirects(Path.Combine(newProjectPath, newName + ".uproject"));
+        }
+
+        private void ResavePackages()
+        {
+            engineUtilities.ResavePackages(Path.Combine(newProjectPath, newName + ".uproject"));
         }
     }
 }

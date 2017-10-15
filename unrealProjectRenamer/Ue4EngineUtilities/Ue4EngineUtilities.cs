@@ -30,5 +30,33 @@ namespace unrealProjectRenamer
             Process process = Process.Start(processStartInfo);
             process?.WaitForExit();
         }
+
+        public void FixupRedirects(string uprojectFilePath)
+        {
+            string engineEditor = Path.Combine(enginePath, "Engine/Binaries/Win64/UE4Editor.exe");
+
+            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            {
+                WindowStyle = ProcessWindowStyle.Hidden,
+                FileName = engineEditor,
+                Arguments = "\"" + uprojectFilePath + "\" -run=FixupRedirects"
+            };
+            Process process = Process.Start(processStartInfo);
+            process?.WaitForExit();
+        }
+
+        public void ResavePackages(string uprojectFilePath)
+        {
+            string engineEditor = Path.Combine(enginePath, "Engine/Binaries/Win64/UE4Editor.exe");
+
+            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            {
+                WindowStyle = ProcessWindowStyle.Hidden,
+                FileName = engineEditor,
+                Arguments = "\"" + uprojectFilePath + "\" -run=ResavePackages"
+            };
+            Process process = Process.Start(processStartInfo);
+            process?.WaitForExit();
+        }
     }
 }
