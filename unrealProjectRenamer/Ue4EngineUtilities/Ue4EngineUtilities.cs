@@ -3,7 +3,7 @@ using System.IO;
 
 namespace unrealProjectRenamer
 {
-    class Ue4EngineUtilities
+    public class Ue4EngineUtilities
     {
         private string enginePath;
 
@@ -20,11 +20,13 @@ namespace unrealProjectRenamer
         public void GenerateProjectFiles(string uprojectFilePath)
         {
             string buildBatPath = Path.Combine(enginePath, "Engine/Binaries/DotNET/UnrealBuildTool.exe");
-            
-            ProcessStartInfo processStartInfo = new ProcessStartInfo();
-            processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            processStartInfo.FileName = buildBatPath;
-            processStartInfo.Arguments = "-projectfiles -project=\"" + uprojectFilePath + "\" -game -rocket -progress";
+
+            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            {
+                WindowStyle = ProcessWindowStyle.Hidden,
+                FileName = buildBatPath,
+                Arguments = "-projectfiles -project=\"" + uprojectFilePath + "\" -game -rocket -progress"
+            };
             Process process = Process.Start(processStartInfo);
             process?.WaitForExit();
         }

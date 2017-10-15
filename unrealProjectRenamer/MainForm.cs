@@ -10,15 +10,14 @@ namespace unrealProjectRenamer
         private readonly Ue4ProjectController projectController;
         private readonly Ue4EngineUtilities engineUtilities;
 
-        public MainForm()
+        public MainForm(Ue4EngineUtilities engineUtilities)
         {
             InitializeComponent();
 
             projectPathTextBox.Validating += ProjectPathTextBox_Validating;
-            EnginePathTextBox.Validating += EnginePathTextBox_Validating;
 
             projectController = new Ue4ProjectController();
-            engineUtilities = new Ue4EngineUtilities();
+            this.engineUtilities = engineUtilities;
         }
 
         private void BrowseProjectButton_Click(object sender, EventArgs e)
@@ -50,29 +49,7 @@ namespace unrealProjectRenamer
                 CurrentProjectNameLabel.Text = "";
             }
         }
-
-        private void BrowseEngineButton_Click(object sender, EventArgs e)
-        {
-            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
-            {
-                Description = Resources.MainForm_enginePathFolderBrowserDescription
-            };
-
-            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-            {
-                EnginePathTextBox.Text = folderBrowserDialog.SelectedPath;
-
-                EnginePathTextBox_Validating(null, null);
-            }
-        }
-
-        protected void EnginePathTextBox_Validating(object sender, CancelEventArgs e)
-        {
-            engineUtilities.InitializeWithEnginePath(EnginePathTextBox.Text);
-            projectPathErrorProvider.SetError(EnginePathTextBox,
-                engineUtilities.IsEnginePathValid() ? "" : "Can't find engine files in given path!");
-        }
-
+        
         private void RenameButton_Click(object sender, EventArgs e)
         {
             if (newProjectNameBox.Text.Equals(""))
